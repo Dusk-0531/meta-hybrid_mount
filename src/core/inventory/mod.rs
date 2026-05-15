@@ -111,8 +111,8 @@ pub fn mount_block_markers(module_path: &std::path::Path) -> Vec<&'static str> {
     if module_path.join(defs::MOUNT_ERROR_FILE_NAME).exists() {
         markers.push(defs::MOUNT_ERROR_FILE_NAME);
     }
-    if module_path.join(defs::SKIP_MOUNT_FILE_NAME).exists() {
-        markers.push(defs::SKIP_MOUNT_FILE_NAME);
+    if module_path.join(defs::SKIP_HYBRID_FILE_NAME).exists() {
+        markers.push(defs::SKIP_HYBRID_FILE_NAME);
     }
     markers
 }

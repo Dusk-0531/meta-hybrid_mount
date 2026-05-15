@@ -394,7 +394,7 @@ impl RuntimeState {
         crate::scoped_log!(
             debug,
             "runtime_state:build",
-            "complete: mount_errors={}, skip_mount_modules={}, active_mounts={}",
+            "complete: mount_errors={}, skip_hybrid_modules={}, active_mounts={}",
             state.mount_error_modules.len(),
             state.skip_mount_modules.len(),
             state.active_mounts.len()
@@ -504,7 +504,7 @@ fn collect_skip_mount_modules(config: &Config) -> Vec<String> {
         if crate::core::inventory::is_reserved_module_dir(&id) {
             continue;
         }
-        if module_dir.join(defs::SKIP_MOUNT_FILE_NAME).exists() {
+        if module_dir.join(defs::SKIP_HYBRID_FILE_NAME).exists() {
             modules.push(id);
         }
     }

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -z "$APATCH" ] && [ -z "$KSU" ]; then
+if [ -z "$APATCH" ] && [ -z "$KSU" ] && [ -z "$MAGISK_VER_CODE" ] && [ -z "$MAGISK_VER" ]; then
   abort "! unsupported root platform"
 fi
 

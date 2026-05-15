@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)
 ![Version](https://img.shields.io/badge/Version-4.0.5-8A2BE2?style=flat-square)
 
-Hybrid Mount is a mount orchestration metamodule for **KernelSU** and **APatch**.
+Hybrid Mount is a mount orchestration metamodule for **KernelSU**, **APatch**, and **Magisk**.
 It merges module files into Android partitions through a unified policy engine backed by three mount backends:
 
 - **OverlayFS** — layered mounts for broad compatibility.
@@ -55,7 +55,7 @@ Releases are published in three flavors: `full` includes Kasumi end to end, `lit
 
 ### Installation
 
-1. Install [KernelSU](https://kernelsu.org/) or [APatch](https://apatch.dev/) on your device.
+1. Install [KernelSU](https://kernelsu.org/), [APatch](https://apatch.dev/), or [Magisk](https://github.com/topjohnwu/Magisk) on your device.
 2. Download the latest Hybrid Mount `full` or `lite` release ZIP from [GitHub Releases](https://github.com/Hybrid-Mount/meta-hybrid_mount/releases).
 3. Flash the ZIP through your root manager's module installer.
 4. Reboot. Hybrid Mount will auto-detect your environment and apply the default overlay policy.

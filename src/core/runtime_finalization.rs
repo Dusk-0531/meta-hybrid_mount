@@ -62,7 +62,7 @@ pub fn finalize(
     crate::scoped_log!(
         info,
         "runtime_finalization",
-        "complete: active_mounts={}, mount_errors={}, skip_mount_modules={}",
+        "complete: active_mounts={}, mount_errors={}, skip_hybrid_modules={}",
         state.active_mounts.len(),
         state.mount_error_modules.len(),
         state.skip_mount_modules.len()

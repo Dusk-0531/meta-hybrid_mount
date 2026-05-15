@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)
 ![Version](https://img.shields.io/badge/Version-4.0.5-8A2BE2?style=flat-square)
 
-Hybrid Mount 是面向 **KernelSU** 与 **APatch** 的挂载编排元模块。
+Hybrid Mount 是面向 **KernelSU**、**APatch** 与 **Magisk** 的挂载编排元模块。
 通过统一的策略引擎，将模块文件合并到 Android 分区，并支持三种挂载后端：
 
 - **OverlayFS** — 分层挂载，兼容性优先。
@@ -55,7 +55,7 @@ Hybrid Mount 是面向 **KernelSU** 与 **APatch** 的挂载编排元模块。
 
 ### 安装
 
-1. 在设备上安装 [KernelSU](https://kernelsu.org/) 或 [APatch](https://apatch.dev/)。
+1. 在设备上安装 [KernelSU](https://kernelsu.org/)、[APatch](https://apatch.dev/) 或 [Magisk](https://github.com/topjohnwu/Magisk)。
 2. 从 [GitHub Releases](https://github.com/Hybrid-Mount/meta-hybrid_mount/releases) 下载对应的 Hybrid Mount `full` 或 `lite` 版本 ZIP。
 3. 通过 Root 管理器的模块安装器刷入 ZIP。
 4. 重启设备。Hybrid Mount 将自动检测运行环境并应用默认 overlay 策略。
