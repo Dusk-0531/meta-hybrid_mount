@@ -32,6 +32,8 @@ pub const SYSTEM_RW_DIR: &str = "/data/adb/hybrid-mount/rw";
 pub const CONFIG_FILE: &str = "/data/adb/hybrid-mount/config.toml";
 #[allow(dead_code)]
 pub const USER_HIDE_RULES_FILE: &str = "/data/adb/hybrid-mount/user_hide_rules.json";
+#[allow(dead_code)]
+pub const SKIPPED_MODULES_FILE: &str = "/data/adb/hybrid-mount/skipped_modules";
 pub const MODULE_PROP_FILE: &str = "/data/adb/modules/hybrid_mount/module.prop";
 pub const KASUMI_MIRROR_DIR: &str = "/dev/kasumi_mirror";
 pub const KASUMI_LKM_DIR: &str = "/data/adb/modules/hybrid_mount/kasumi_lkm";
@@ -41,6 +43,7 @@ pub const KASUMI_LKM_MODULE_NAME: &str = "kasumi_lkm";
 pub const DISABLE_FILE_NAME: &str = "disable";
 pub const REMOVE_FILE_NAME: &str = "remove";
 pub const MOUNT_ERROR_FILE_NAME: &str = "mount_error";
+pub const SKIP_HYBRID_FILE_NAME: &str = "skip_hybrid";
 pub const SKIP_MOUNT_FILE_NAME: &str = "skip_mount";
 pub const REPLACE_DIR_FILE_NAME: &str = ".replace";
 #[cfg(any(target_os = "linux", target_os = "android"))]

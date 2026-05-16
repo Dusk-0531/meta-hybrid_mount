@@ -13,8 +13,9 @@
 // limitations under the License.
 
 use std::{
-    fs,
-    io::ErrorKind,
+    collections::BTreeSet,
+    env, fs,
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
 };
 
@@ -41,6 +42,7 @@ use crate::{
         runtime_finalization,
         storage::StorageHandle,
     },
+    defs,
 };
 
 pub struct Init;
@@ -188,6 +190,7 @@ impl MountController<StorageReady> {
 impl MountController<Planned> {
     pub fn execute(mut self) -> Result<MountController<Executed>> {
         crate::scoped_log!(info, "controller:execute", "start");
+        sync_skip_mount_markers(&self.config, &self.state.plan)?;
         let result = executor::Executor::execute(
             &mut self.state.plan,
             &self.state.modules,
@@ -213,6 +216,89 @@ impl MountController<Planned> {
             },
             tempdir: self.tempdir,
         })
+    }
+}
+
+fn sync_skip_mount_markers(config: &Config, plan: &MountPlan) -> Result<()> {
+    let should_manage = should_manage_skip_mount_markers();
+    if !should_manage {
+        clear_skipped_modules_log();
+    }
+
+    let mut module_ids = BTreeSet::new();
+    module_ids.extend(plan.overlay_module_ids.iter().cloned());
+    module_ids.extend(plan.magic_module_ids.iter().cloned());
+    module_ids.extend(plan.kasumi_module_ids.iter().cloned());
+
+    for module_id in module_ids {
+        let module_dir = config.moduledir.join(&module_id);
+        if !module_dir.is_dir() {
+            continue;
+        }
+        let skip_mount_path = module_dir.join(defs::SKIP_MOUNT_FILE_NAME);
+        if should_manage {
+            if !skip_mount_path.exists() {
+                fs::write(&skip_mount_path, b"")?;
+                append_skipped_module(&module_id)?;
+                crate::scoped_log!(
+                    debug,
+                    "controller:skip_mount",
+                    "create: module={}, path={}",
+                    module_id,
+                    skip_mount_path.display()
+                );
+            }
+        } else if let Err(err) = fs::remove_file(&skip_mount_path)
+            && err.kind() != ErrorKind::NotFound
+        {
+            return Err(err.into());
+        }
+    }
+
+    Ok(())
+}
+
+fn should_manage_skip_mount_markers() -> bool {
+    !(is_apatch_litemode() || is_metamodule())
+}
+
+fn is_metamodule() -> bool {
+    Path::new(defs::HYBRID_MOUNT_MODULE_DIR)
+        .join("metamount.sh")
+        .exists()
+}
+
+fn is_apatch_litemode() -> bool {
+    env::var("APATCH_BIND_MOUNT")
+        .ok()
+        .is_some_and(|value| value == "true")
+        && Path::new("/data/adb/.litemode_enable").exists()
+}
+
+fn append_skipped_module(module_id: &str) -> Result<()> {
+    let log_path = Path::new(defs::SKIPPED_MODULES_FILE);
+    if let Some(parent) = log_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)?;
+    writeln!(file, "{module_id}")?;
+    Ok(())
+}
+
+fn clear_skipped_modules_log() {
+    if let Err(err) = fs::remove_file(defs::SKIPPED_MODULES_FILE)
+        && err.kind() != ErrorKind::NotFound
+    {
+        crate::scoped_log!(
+            warn,
+            "controller:skip_mount",
+            "failed to clear skipped modules log: path={}, error={:#}",
+            defs::SKIPPED_MODULES_FILE,
+            err
+        );
     }
 }
 

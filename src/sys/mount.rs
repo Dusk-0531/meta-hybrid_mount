@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{path::Path, process::Command};
+use std::{env, path::Path, process::Command};
 
 use anyhow::{Context, Result, bail};
 #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -30,9 +30,35 @@ pub fn detect_mount_source() -> String {
             crate::scoped_log!(debug, "sys:mount_source", "complete: source=KSU");
             return "KSU".to_string();
         }
+        if is_apatch_present() {
+            crate::scoped_log!(debug, "sys:mount_source", "complete: source=APatch");
+            return "APatch".to_string();
+        }
+        if is_magisk_present() {
+            crate::scoped_log!(debug, "sys:mount_source", "complete: source=magisk");
+            return "magisk".to_string();
+        }
     }
     crate::scoped_log!(debug, "sys:mount_source", "complete: source=APatch");
     "APatch".to_string()
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn is_apatch_present() -> bool {
+    env::var("APATCH")
+        .ok()
+        .or_else(|| env::var("APATCH_BIND_MOUNT").ok())
+        .is_some()
+        || Path::new("/data/adb/ap").exists()
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn is_magisk_present() -> bool {
+    env::var("MAGISK_VER_CODE")
+        .ok()
+        .or_else(|| env::var("MAGISK_VER").ok())
+        .is_some()
+        || Path::new("/data/adb/magisk").exists()
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]

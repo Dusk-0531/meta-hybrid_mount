@@ -18,6 +18,14 @@
 # Cleanup script for metamodule removal
 ############################################
 
+SKIPPED_MODULES="/data/adb/hybrid-mount/skipped_modules"
+if [ -f "$SKIPPED_MODULES" ]; then
+  while IFS= read -r module_id; do
+    [ -z "$module_id" ] && continue
+    rm -f "/data/adb/modules/$module_id/skip_mount" >/dev/null 2>&1
+  done < "$SKIPPED_MODULES"
+fi
+
 rm -rf "/data/adb/hybrid-mount"
 
 exit 0
