@@ -32,11 +32,6 @@ env:
 jobs:
   lints-check:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hybrid-mount/meta-hybrid_mount-ci:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       checks: write
       contents: read
@@ -45,50 +40,73 @@ jobs:
       - uses: actions/checkout@v6
       - name: Trust checkout directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build CI image
+        run: docker build -f .github/docker/ci/Dockerfile -t meta-hybrid_mount-ci:local .
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
       - name: Format codes
-        run: cargo fmt --all -- --check
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            cargo fmt --all -- --check
       - name: Clippy code
-        run: cargo clippy --all-targets -- -D warnings
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            cargo clippy --all-targets -- -D warnings
       - name: Run unit tests
-        run: cargo test --all-targets --workspace
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            cargo test --all-targets --workspace
 
   webui-lints:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hybrid-mount/meta-hybrid_mount-ci:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: read
       packages: read
-    defaults:
-      run:
-        working-directory: webui
+    env:
+      PNPM_STORE_PATH: ${{ github.workspace }}/.pnpm-store
     steps:
       - uses: actions/checkout@v6
-      - name: Resolve pnpm store path
-        id: pnpm-store
-        shell: bash
-        run: |
-          set -euo pipefail
-          STORE_PATH="$(pnpm store path --silent)"
-          mkdir -p "$STORE_PATH"
-          echo "path=$STORE_PATH" >> "$GITHUB_OUTPUT"
+      - name: Prepare pnpm store
+        run: mkdir -p "$PNPM_STORE_PATH"
       - name: Cache pnpm store
         uses: actions/cache@v5
         with:
-          path: ${{ steps.pnpm-store.outputs.path }}
+          path: ${{ env.PNPM_STORE_PATH }}
           key: pnpm-${{ runner.os }}-${{ hashFiles('webui/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-${{ runner.os }}-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Build CI image
+        run: docker build -f .github/docker/ci/Dockerfile -t meta-hybrid_mount-ci:local .
       - name: Generate constants
         run: |
-          cat <<'EOF' > src/lib/constants_gen.ts
+          cat <<'EOF' > webui/src/lib/constants_gen.ts
           export const APP_VERSION = "dev";
           export const IS_RELEASE = false;
           export const ENABLE_KASUMI = true;
@@ -98,8 +116,63 @@ jobs:
             BINARY: "/data/adb/modules/hybrid_mount/hybrid-mount",
           } as const;
           EOF
-          pnpm generate:info-tab-data
+      - name: Install dependencies
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$PNPM_STORE_PATH:$PNPM_STORE_PATH" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e PNPM_STORE_PATH="$PNPM_STORE_PATH" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo/webui \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            pnpm install --frozen-lockfile --store-dir "$PNPM_STORE_PATH"
+      - name: Generate info tab data
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$PNPM_STORE_PATH:$PNPM_STORE_PATH" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e PNPM_STORE_PATH="$PNPM_STORE_PATH" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo/webui \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            pnpm generate:info-tab-data
       - name: Run lint
-        run: pnpm lint
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$PNPM_STORE_PATH:$PNPM_STORE_PATH" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e PNPM_STORE_PATH="$PNPM_STORE_PATH" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo/webui \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            pnpm lint
       - name: Run test
-        run: pnpm test
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            -v "$PNPM_STORE_PATH:$PNPM_STORE_PATH" \
+            -v "$HOME/.cargo:/home/runner/.cargo" \
+            -v "$HOME/.rustup:/home/runner/.rustup" \
+            -e PNPM_STORE_PATH="$PNPM_STORE_PATH" \
+            -e HOME=/home/runner \
+            -e CARGO_HOME=/home/runner/.cargo \
+            -e RUSTUP_HOME=/home/runner/.rustup \
+            -w /repo/webui \
+            --user "$(id -u):$(id -g)" \
+            meta-hybrid_mount-ci:local \
+            pnpm test
